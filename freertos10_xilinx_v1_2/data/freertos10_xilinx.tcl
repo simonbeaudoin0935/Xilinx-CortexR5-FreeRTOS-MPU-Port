@@ -284,7 +284,15 @@ proc generate {os_handle} {
 	file copy -force [file join src Source list.c] ./src
 	file copy -force [file join src Source timers.c] ./src
 	file copy -force [file join src Source event_groups.c] ./src
+	file copy -force [file join src Source stream_buffer.c] ./src
 	file copy -force [file join src Source portable MemMang heap_4.c] ./src
+
+	set val [common::get_property CONFIG.use_mpu_support $os_handle]
+	if {$val == "true"} {
+		file copy -force [file join src Source portable Common mpu_wrappers.c] ./src
+	}
+
+	
 
 	if { $proctype == "psu_cortexr5" } {
 		file copy -force [file join src Source portable GCC ARM_CR5 port.c] ./src
@@ -460,6 +468,13 @@ proc generate {os_handle} {
 	puts $config_file "#define _FREERTOSCONFIG_H"
 	puts $config_file ""
 	puts $config_file "\#include \"xparameters.h\" \n"
+
+	set val [common::get_property CONFIG.use_mpu_support $os_handle]
+	if {$val == "false"} {
+		xput_define $config_file "portUSING_MPU_WRAPPERS" "0"
+	} else {
+		xput_define $config_file "portUSING_MPU_WRAPPERS" "1"
+	}
 
 	set val [common::get_property CONFIG.use_preemption $os_handle]
 	if {$val == "false"} {
