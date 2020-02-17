@@ -36,7 +36,7 @@
 /* BSP includes. */
 #include "xil_types.h"
 
-#ifdef portUSING_MPU_WRAPPERS
+#if (portUSING_MPU_WRAPPERS == 1)
     #include "portMPU.h"
 #endif
 
