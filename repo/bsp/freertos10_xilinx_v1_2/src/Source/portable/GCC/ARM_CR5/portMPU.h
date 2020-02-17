@@ -71,6 +71,8 @@ typedef struct MPU_SETTINGS
 //	__asm volatile( "isb" );													\
 //}
 
+typedef long BaseType_t;
+
 void vPortResetPrivilege( BaseType_t xRunningPrivileged );
 
 BaseType_t xPortRaisePrivilege( void );
