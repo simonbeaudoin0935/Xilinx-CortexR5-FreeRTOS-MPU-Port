@@ -36,6 +36,10 @@
 /* BSP includes. */
 #include "xil_types.h"
 
+#ifdef portUSING_MPU_WRAPPERS
+    #include "portMPU.h"
+#endif
+
 /*-----------------------------------------------------------
  * Port specific definitions.
  *
