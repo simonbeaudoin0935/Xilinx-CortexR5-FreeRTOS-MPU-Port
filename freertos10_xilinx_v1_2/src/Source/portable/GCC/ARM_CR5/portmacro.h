@@ -35,7 +35,6 @@
 
 /* BSP includes. */
 #include "xil_types.h"
-#include "xpseudo_asm.h"
 
 /*-----------------------------------------------------------
  * Port specific definitions.
@@ -71,105 +70,6 @@ typedef uint32_t TickType_t;
 #define portBYTE_ALIGNMENT			8
 
 /*-----------------------------------------------------------*/
-
-
-
-
-/*-----------------------------------------------------------*/
-/* MPU stuff */
-/*-----------------------------------------------------------*/
-#include "xreg_cortexr5.h"
-
-#define portPRIVILEGE_BIT			( 0x80000000UL )
-
-#define portMPU_REGION_READ_WRITE								( 0x03UL << 24UL )
-#define portMPU_REGION_PRIVILEGED_READ_ONLY						( 0x05UL << 24UL )
-#define portMPU_REGION_READ_ONLY								( 0x06UL << 24UL )
-#define portMPU_REGION_PRIVILEGED_READ_WRITE					( 0x01UL << 24UL )
-#define portMPU_REGION_PRIVILEGED_READ_WRITE_UNPRIV_READ_ONLY	( 0x02UL << 24UL )
-#define portMPU_REGION_CACHEABLE_BUFFERABLE						( 0x07UL << 16UL )
-#define portMPU_REGION_EXECUTE_NEVER							( 0x01UL << 28UL )
-
-#warning "Clear this shit"
-
-#define portUNPRIVILEGED_FLASH_REGION		( 0UL )
-#define portPRIVILEGED_FLASH_REGION			( 1UL )
-#define portPRIVILEGED_RAM_REGION			( 2UL )
-#define portGENERAL_PERIPHERALS_REGION		( 3UL )
-#define portSTACK_REGION					( 4UL )
-#define portFIRST_CONFIGURABLE_REGION	    ( 5UL )
-#define portLAST_CONFIGURABLE_REGION		( 15UL )
-#define portNUM_CONFIGURABLE_REGIONS		( ( portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION ) + 1 )
-#define portTOTAL_NUM_REGIONS				( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus one to make space for the stack region. */
-
-
-typedef struct MPU_REGION_REGISTERS
-{
-	uint32_t ulRegionBaseAddress;
-	uint32_t ulRegionAttribute;
-} xMPU_REGION_REGISTERS;
-
-/* Plus 1 to create space for the stack region. */
-typedef struct MPU_SETTINGS
-{
-	xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS ];
-} xMPU_SETTINGS;
-
-
-
-
-#warning "Check numbers here for swi"
-
-/* SVC numbers for various services. */
-#define portSVC_START_SCHEDULER				0
-#define portSVC_YIELD						1
-#define portSVC_RAISE_PRIVILEGE				2
-
-/* Scheduler utilities. */
-#warning "Checkout the SWI stuff in portASM.S"
-#define portYIELD()				__asm volatile ( "	SVC	%0" :: "i" (portSVC_YIELD) : "memory" )
-
-#warning "check the portNVIC thing"
-//#define portYIELD_WITHIN_API() 													\
-//{																				\
-//	/* Set a PendSV to request a context switch. */								\
-//	/*portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;*/							\
-//																				\
-//	/* Barriers are normally not required but do ensure the code is completely	\
-//	within the specified behaviour for the architecture. */						\
-//	__asm volatile( "dsb" ::: "memory" );										\
-//	__asm volatile( "isb" );													\
-//}
-
-
-
-#warning "Check this shit"
-__attribute__((always_inline)) static void vPortResetPrivilege( BaseType_t xRunningPrivileged )
-{
-	if( xRunningPrivileged != pdTRUE )
-	{
-	__asm__ __volatile__ ("CPS " stringify(XREG_CPSR_USER_MODE));
-	}
-}
-
-#warning "Check this and return value"
-__attribute__((always_inline)) static BaseType_t xPortRaisePrivilege( void )
-{
-	uint32_t cprs = mfcpsr();
-
-	 if (mfcpsr() & XREG_CPSR_MODE_BITS == XREG_CPSR_USER_MODE){
-		 __asm__ __volatile__("SWI %0 ":: "i"(portSVC_RAISE_PRIVILEGE): "memory");
-		 return 1;
-	 }
-	 else{
-		 return 0;
-	 }
-}
-
-/*-----------------------------------------------------------*/
-/* MPU stuff */
-/*-----------------------------------------------------------*/
-
 
 /* Task utilities. */
 
@@ -345,7 +245,3 @@ number of bits implemented by the interrupt controller. */
 #define portICCRPR_RUNNING_PRIORITY_REGISTER 				( *( ( const volatile uint32_t * ) ( portINTERRUPT_CONTROLLER_CPU_INTERFACE_ADDRESS + portICCRPR_RUNNING_PRIORITY_OFFSET ) ) )
 
 #endif /* PORTMACRO_H */
-
-
-
-
