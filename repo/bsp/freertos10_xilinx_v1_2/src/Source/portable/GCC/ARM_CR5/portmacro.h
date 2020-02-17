@@ -36,9 +36,7 @@
 /* BSP includes. */
 #include "xil_types.h"
 
-#if (portUSING_MPU_WRAPPERS == 1)
-    #include "portMPU.h"
-#endif
+
 
 /*-----------------------------------------------------------
  * Port specific definitions.
@@ -65,6 +63,10 @@ typedef unsigned long UBaseType_t;
 
 typedef uint32_t TickType_t;
 #define portMAX_DELAY ( TickType_t ) 0xffffffffUL
+
+#if (portUSING_MPU_WRAPPERS == 1)
+    #include "portMPU.h"
+#endif
 
 /*-----------------------------------------------------------*/
 
