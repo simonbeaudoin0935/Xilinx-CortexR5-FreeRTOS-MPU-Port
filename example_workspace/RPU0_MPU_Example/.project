@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>RPU0_MPU_Example</name>
-	<comment>Created by SDK v2018.3. RPU0_bsp - psu_cortexa53_0</comment>
+	<comment>Created by SDK v2018.3. RPU0_bsp - psu_cortexr5_0</comment>
 	<projects>
 		<project>RPU0_bsp</project>
 	</projects>
