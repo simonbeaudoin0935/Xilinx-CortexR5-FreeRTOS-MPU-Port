@@ -210,7 +210,11 @@ static int32_t prvEnsureInterruptControllerIsInitialised( void );
 /*
  * See header file for description.
  */
+#if( portUSING_MPU_WRAPPERS == 1 )
+StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t pxCode, void *pvParameters, BaseType_t xRunPrivileged )
+#else
 StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t pxCode, void *pvParameters )
+#endif
 {
 	/* Setup the initial stack of the task.  The stack is set exactly as
 	expected by the portRESTORE_CONTEXT() macro.
