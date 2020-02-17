@@ -299,6 +299,8 @@ proc generate {os_handle} {
 		file copy -force [file join src Source portable GCC ARM_CR5 portASM.S] ./src
 		file copy -force [file join src Source portable GCC ARM_CR5 port_asm_vectors.S] ./src
 		file copy -force [file join src Source portable GCC ARM_CR5 portmacro.h] ./src
+		file copy -force [file join src Source portable GCC ARM_CR5 portMPU.h] ./src
+		file copy -force [file join src Source portable GCC ARM_CR5 portMPU.c] ./src
 		file copy -force [file join src Source portable GCC ARM_CR5 portZynqUltrascale.c] ./src
 	}
 	if { $proctype == "psu_cortexa53" } {
