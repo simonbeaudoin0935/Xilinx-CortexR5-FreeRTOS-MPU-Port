@@ -124,38 +124,70 @@ static TimerHandle_t xTimer = NULL;
 char HWstring[15] = "Hello World";
 long RxtaskCntr = 0;
 
+#define STACK_DEPTH 128
+StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
+StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
+
 int main( void )
 {
 	const TickType_t x10seconds = pdMS_TO_TICKS( DELAY_10_SECONDS );
 
 	xil_printf( "Hello from Freertos example main\r\n" );
 
+	/* Create the queue used by the tasks.  The Rx task has a higher priority
+		than the Tx task, so will preempt the Tx task and remove values from the
+		queue as soon as the Tx task writes to the queue - therefore the queue can
+		never have more than one item in it. */
+		xQueue = xQueueCreate( 	1,						/* There is only one space in the queue. */
+								sizeof( HWstring ) );	/* Each space in the queue is large enough to hold a uint32_t. */
+
+
+		/* Check the queue was created. */
+		configASSERT( xQueue );
+
 	/* Create the two tasks.  The Tx task is given a lower priority than the
 	Rx task, so the Rx task will leave the Blocked state and pre-empt the Tx
 	task as soon as the Tx task places an item in the queue. */
-	xTaskCreate( 	prvTxTask, 					/* The function that implements the task. */
-					( const char * ) "Tx", 		/* Text name for the task, provided to assist debugging only. */
-					configMINIMAL_STACK_SIZE, 	/* The stack allocated to the task. */
-					NULL, 						/* The task parameter is not used, so set to NULL. */
-					tskIDLE_PRIORITY,			/* The task runs at the idle priority. */
-					&xTxTask );
 
-	xTaskCreate( prvRxTask,
-				 ( const char * ) "GB",
-				 configMINIMAL_STACK_SIZE,
-				 NULL,
-				 tskIDLE_PRIORITY + 1,
-				 &xRxTask );
 
-	/* Create the queue used by the tasks.  The Rx task has a higher priority
-	than the Tx task, so will preempt the Tx task and remove values from the
-	queue as soon as the Tx task writes to the queue - therefore the queue can
-	never have more than one item in it. */
-	xQueue = xQueueCreate( 	1,						/* There is only one space in the queue. */
-							sizeof( HWstring ) );	/* Each space in the queue is large enough to hold a uint32_t. */
 
-	/* Check the queue was created. */
-	configASSERT( xQueue );
+	const TaskParameters_t paramsTx =
+	{
+		prvTxTask,
+		"Tx",
+		STACK_DEPTH,
+		xQueue,
+		tskIDLE_PRIORITY,
+		task_tx_stack,
+		{
+			{0,0,0},
+			{0,0,0},
+			{0,0,0},
+		}
+	};
+
+	xTaskCreateRestricted(&paramsTx, &xTxTask);
+
+	const TaskParameters_t paramsRx =
+	{
+		prvRxTask,
+		"GB",
+		STACK_DEPTH,
+		xQueue,
+		tskIDLE_PRIORITY,
+		task_rx_stack,
+		{
+			{0,0,0},
+			{0,0,0},
+			{0,0,0},
+		}
+	};
+
+	xTaskCreateRestricted(&paramsRx, &xRxTask);
+
+
+
+
 
 	/* Create a timer with a timer expiry of 10 seconds. The timer would expire
 	 after 10 seconds and the timer call back would get called. In the timer call back
