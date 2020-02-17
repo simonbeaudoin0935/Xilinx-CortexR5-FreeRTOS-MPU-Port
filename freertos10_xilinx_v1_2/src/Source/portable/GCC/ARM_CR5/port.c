@@ -278,6 +278,20 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 	any floating point instructions. */
 	*pxTopOfStack = portNO_FLOATING_POINT_CONTEXT;
 
+
+#if( portUSING_MPU_WRAPPERS == 1 )
+	pxTopOfStack--;
+
+	if( xRunPrivileged == pdTRUE )
+	{
+		*pxTopOfStack = portINITIAL_CONTROL_IF_PRIVILEGED;
+	}
+	else
+	{
+		*pxTopOfStack = portINITIAL_CONTROL_IF_UNPRIVILEGED;
+	}
+#endif
+
 	return pxTopOfStack;
 }
 /*-----------------------------------------------------------*/
@@ -497,6 +511,11 @@ void vPortEndScheduler( void )
 
 void vPortEnterCritical( void )
 {
+    /* CPU can't modify A,I of F bit of cpsr if in user mode */
+#if( portUSING_MPU_WRAPPERS == 1 )
+	BaseType_t xRunningPrivileged = xPortRaisePrivilege();
+#endif
+
 	/* Mask interrupts up to the max syscall interrupt priority. */
 	ulPortSetInterruptMask();
 
@@ -514,11 +533,22 @@ void vPortEnterCritical( void )
 	{
 		configASSERT( ulPortInterruptNesting == 0 );
 	}
+
+   /* If we were in usre mode, return to it. */
+#if( portUSING_MPU_WRAPPERS == 1 )
+    vPortResetPrivilege( xRunningPrivileged );
+#endif
+
 }
 /*-----------------------------------------------------------*/
 
 void vPortExitCritical( void )
 {
+    /* CPU can't modify A,I of F bit of cpsr if in user mode */
+#if( portUSING_MPU_WRAPPERS == 1 )
+	BaseType_t xRunningPrivileged = xPortRaisePrivilege();
+#endif
+
 	if( ulCriticalNesting > portNO_CRITICAL_NESTING )
 	{
 		/* Decrement the nesting count as the critical section is being
@@ -534,6 +564,11 @@ void vPortExitCritical( void )
 			portCLEAR_INTERRUPT_MASK();
 		}
 	}
+
+   /* If we were in usre mode, return to it. */
+#if( portUSING_MPU_WRAPPERS == 1 )
+    vPortResetPrivilege( xRunningPrivileged );
+#endif
 }
 /*-----------------------------------------------------------*/
 

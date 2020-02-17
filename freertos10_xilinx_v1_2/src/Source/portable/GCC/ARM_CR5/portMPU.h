@@ -10,6 +10,10 @@
 #include "xpseudo_asm.h"
 #include "xreg_cortexr5.h"
 
+/* Used in stack initialization */
+#define portINITIAL_CONTROL_IF_UNPRIVILEGED		( 0x03 )
+#define portINITIAL_CONTROL_IF_PRIVILEGED		( 0x02 )
+
 
 #define portPRIVILEGE_BIT			( 0x80000000UL )
 
