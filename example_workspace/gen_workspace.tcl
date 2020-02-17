@@ -18,7 +18,7 @@ createhw -name ZCU102_hw_platform -hwspec $SDK_path/data/embeddedsw/lib/hwplatfo
 createbsp -name RPU0_bsp -proc psu_cortexr5_0 -hwproject ZCU102_hw_platform -os freertos10_xilinx
 
 #Configure the bsp for using mpu 
-configbsp -bsp RPU0_bsp -os use_mpu_support true
+configbsp -bsp RPU0_bsp use_mpu_support true
 
 #Regenerate both BSPs 
 regenbsp -bsp RPU0_bsp
