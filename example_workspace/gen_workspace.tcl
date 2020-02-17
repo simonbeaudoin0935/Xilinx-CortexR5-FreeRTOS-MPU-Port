@@ -1,4 +1,6 @@
 
+set SDK_path "/opt/Xilinx/SDK/2018.3"
+
 # Create workspace
 set current_path [exec pwd]
 
@@ -8,9 +10,8 @@ setws -switch "$current_path"
 #Add the repository containing freertos bsp
 repo -set "../repo"
 
-
 #Create HW project
-#createhw -name HW -hwspec "system.hdf"
+createhw -name ZCU102_hw_platform -hwspec $SDK_path/data/embeddedsw/lib/hwplatform_templates/ZCU102_hw_platform/system.hdf
 
 
 #create BSPs for RPU0 and RPU1
