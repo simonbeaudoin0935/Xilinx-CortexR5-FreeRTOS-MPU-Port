@@ -19,6 +19,8 @@
 
 
 //Cortex R5 MPU masks, defined in xreg_cortexr5.h
+#define portMPU_REGION_ENABLE                                   REGION_EN
+
 #define portMPU_REGION_READ_WRITE								PRIV_RW_USER_RW
 #define portMPU_REGION_PRIVILEGED_READ_ONLY						PRIV_RO_USER_NA
 #define portMPU_REGION_READ_ONLY								PRIV_RO_USER_RO
@@ -43,6 +45,7 @@
 typedef struct MPU_REGION_REGISTERS
 {
 	uint32_t ulRegionBaseAddress;
+    uint32_t ulRegionSize;
 	uint32_t ulRegionAttribute;
 } xMPU_REGION_REGISTERS;
 
