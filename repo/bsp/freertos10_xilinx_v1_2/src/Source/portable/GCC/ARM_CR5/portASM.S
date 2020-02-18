@@ -79,6 +79,15 @@
 	/* Save ulPortTaskHasFPUContext itself. */
 	PUSH	{R3}
 
+    /* Save if we restore priviledged */
+    MRS      R0, spsr
+    ORR      R0, #0x1F
+    CMP      R0, #0x10
+    MOVEQ    R0, #0x03
+    MOVNE    R0, #0x02
+    
+    PUSH     {R3}
+
 	/* Save the stack pointer in the TCB. */
 	LDR		R0, pxCurrentTCBConst
 	LDR		R1, [R0]
@@ -94,6 +103,18 @@
 	LDR		R0, pxCurrentTCBConst
 	LDR		R1, [R0]
 	LDR		SP, [R1]
+
+    /* Is the task supposed to return in priviledged mode?*/
+    POP     {R0}
+    CMP     R0,#0x02
+    ADDEQ   PC,PC,#4
+   
+    CPS     #0x10
+    NOP
+    CPS     #0x1F
+    
+
+
 
 	/* Is there a floating point context to restore?  If the restored
 	ulPortTaskHasFPUContext is zero then no. */
@@ -122,6 +143,7 @@
 	LDRNE	R4, [R4]
 	STR		R4, [R2]
 
+    
 	/* Restore all system mode registers other than the SP (which is already
 	being used). */
 	POP		{R0-R12, R14}

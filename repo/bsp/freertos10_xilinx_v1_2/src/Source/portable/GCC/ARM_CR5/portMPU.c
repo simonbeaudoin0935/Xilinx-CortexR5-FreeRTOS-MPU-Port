@@ -79,9 +79,9 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMOR
  * Return to user mode if xRunningPrivileged is true. This function will be used in pair
  * with xPortRaisePrivilege. 
  */
-void vPortResetPrivilege( BaseType_t xRunningPrivileged )
+void vPortResetPrivilege( BaseType_t wasUserMode )
 {
-	if( xRunningPrivileged != pdTRUE )
+	if( wasUserMode == pdTRUE )
 	{
 	__asm__ __volatile__ ("CPS %0" :: "i"(XREG_CPSR_USER_MODE):"memory");
 	}
@@ -93,6 +93,8 @@ void vPortResetPrivilege( BaseType_t xRunningPrivileged )
  */
 BaseType_t xPortRaisePrivilege( void )
 {
+    BaseType_t wasUserMode = pdFALSE;
+
 	 if ((mfcpsr() & XREG_CPSR_MODE_BITS) == XREG_CPSR_USER_MODE){
 		 __asm__ __volatile__("SWI %0 ":: "i"(portSVC_RAISE_PRIVILEGE): "memory");
 		 return pdTRUE;
