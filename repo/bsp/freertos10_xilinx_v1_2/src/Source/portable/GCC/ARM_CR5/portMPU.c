@@ -1,5 +1,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
+#include "xpseudo_asm_gcc.h"
+#include "xreg_cortexr5.h"
 
 #if( portUSING_MPU_WRAPPERS == 1 )
 
@@ -83,8 +85,14 @@ void vPortResetPrivilege( BaseType_t wasUserMode )
 {
 	if( wasUserMode == pdTRUE )
 	{
-	__asm__ __volatile__ ("CPS %0" :: "i"(XREG_CPSR_USER_MODE):"memory");
+		//xil_printf("Task lowered priviledge\r\n");
+		__asm__ __volatile__ ("CPS %0" :: "i"(XREG_CPSR_USER_MODE):"memory");
 	}
+	else
+	{
+		//xil_printf("Task didn't had to lower it's priviledge priviledge\r\n");
+	}
+
 }
 
 /*
@@ -93,16 +101,53 @@ void vPortResetPrivilege( BaseType_t wasUserMode )
  */
 BaseType_t xPortRaisePrivilege( void )
 {
-    BaseType_t wasUserMode = pdFALSE;
+	BaseType_t wasUserMode = pdFALSE;
 
-	 if ((mfcpsr() & XREG_CPSR_MODE_BITS) == XREG_CPSR_USER_MODE){
-		 __asm__ __volatile__("SWI %0 ":: "i"(portSVC_RAISE_PRIVILEGE): "memory");
-		 return pdTRUE;
-	 }
-	 else{
-		 return pdFALSE;
-	 }
+	if ((mfcpsr() & XREG_CPSR_MODE_BITS) == XREG_CPSR_USER_MODE)
+	{
+		__asm__ __volatile__("SWI %0 ":: "i"(portSVC_RAISE_PRIVILEGE): "memory");
+		 
+		//xil_printf("Task asked and raised its priviledge\r\n");
+		wasUserMode = pdTRUE;
+	}
+	else
+	{
+		//xil_printf("Task asked and didn't need to raised its priviledge\r\n");
+		wasUserMode = pdFALSE;
+	}
+
+	return wasUserMode;
 }
+
+const char* xPortGetCPUModeStr(void)
+{
+	switch(mfcpsr() & XREG_CPSR_MODE_BITS)
+	{
+	case XREG_CPSR_USER_MODE:
+		return "USER_MODE";
+
+	case XREG_CPSR_SYSTEM_MODE:
+		return "SYSTEM_MODE";
+
+	case XREG_CPSR_IRQ_MODE:
+		return "RQ_MODE";
+
+	case XREG_CPSR_SVC_MODE:
+		return "SVC_MODE";
+
+	case XREG_CPSR_UNDEFINED_MODE :
+		return "UNDEFINED_MODE";
+
+	case XREG_CPSR_DATA_ABORT_MODE:
+		return "ABORT_MODE";
+
+	case XREG_CPSR_FIQ_MODE:
+		return "FIQ_MODE";
+
+	default: return "NO";
+	}
+}
+
 
 void setupMPU(void)
 {

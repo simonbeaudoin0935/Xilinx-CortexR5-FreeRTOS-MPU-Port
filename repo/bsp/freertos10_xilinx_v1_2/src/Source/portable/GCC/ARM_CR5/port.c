@@ -228,7 +228,20 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 	pxTopOfStack--;
 	*pxTopOfStack = ( StackType_t ) NULL;
 	pxTopOfStack--;
+
+#if( portUSING_MPU_WRAPPERS == 1 )
+
+	if( xRunPrivileged == pdTRUE )
+	{
+		*pxTopOfStack = portINITIAL_SPSR_PRIVILEGED;
+	}
+	else
+	{
+		*pxTopOfStack = portINITIAL_SPSR_UNPRIVILEGED;
+	}
+#else
 	*pxTopOfStack = ( StackType_t ) portINITIAL_SPSR;
+#endif
 
 	if( ( ( uint32_t ) pxCode & portTHUMB_MODE_ADDRESS ) != 0x00UL )
 	{
@@ -282,19 +295,6 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 	any floating point instructions. */
 	*pxTopOfStack = portNO_FLOATING_POINT_CONTEXT;
 
-
-#if( portUSING_MPU_WRAPPERS == 1 )
-	pxTopOfStack--;
-
-	if( xRunPrivileged == pdTRUE )
-	{
-		*pxTopOfStack = portINITIAL_CONTROL_IF_PRIVILEGED;
-	}
-	else
-	{
-		*pxTopOfStack = portINITIAL_CONTROL_IF_UNPRIVILEGED;
-	}
-#endif
 
 	return pxTopOfStack;
 }
@@ -686,3 +686,4 @@ uint32_t ulReturn;
 
 #endif /* configASSERT_DEFINED */
 /*-----------------------------------------------------------*/
+

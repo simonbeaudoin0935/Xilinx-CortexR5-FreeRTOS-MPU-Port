@@ -11,8 +11,8 @@
 #include "xreg_cortexr5.h"
 
 /* Used in stack initialization */
-#define portINITIAL_CONTROL_IF_UNPRIVILEGED		( 0x03 )
-#define portINITIAL_CONTROL_IF_PRIVILEGED		( 0x02 )
+#define portINITIAL_SPSR_UNPRIVILEGED	XREG_CPSR_USER_MODE
+#define portINITIAL_SPSR_PRIVILEGED		XREG_CPSR_SYSTEM_MODE
 
 
 #define portPRIVILEGE_BIT			( 0x80000000UL )
@@ -82,6 +82,7 @@ BaseType_t xPortRaisePrivilege( void );
 
 void setupMPU(void) __attribute__((weak));
 
+const char* xPortGetCPUModeStr(void);
 
 #ifdef __cplusplus
 	} /* extern C */
