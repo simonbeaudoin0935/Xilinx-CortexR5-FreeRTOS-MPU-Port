@@ -128,9 +128,7 @@ long RxtaskCntr = 0;
 StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 
-void setupMPU(void){
-	xil_printf("MPU setup!\r\n");
-}
+
 
 int main( void )
 {
@@ -212,6 +210,7 @@ int main( void )
 	   10 seconds */
 	xTimerStart( xTimer, 0 );
 
+	xil_printf("Main is executing in %s\r\n",xPortGetCPUModeStr());
 	/* Start the tasks and timer running. */
 	vTaskStartScheduler();
 
@@ -228,6 +227,8 @@ int main( void )
 static void prvTxTask( void *pvParameters )
 {
 const TickType_t x1second = pdMS_TO_TICKS( DELAY_1_SECOND );
+
+	xil_printf("prvTxTask is executing in %s\r\n",xPortGetCPUModeStr());
 
 	for( ;; )
 	{
@@ -246,6 +247,8 @@ const TickType_t x1second = pdMS_TO_TICKS( DELAY_1_SECOND );
 static void prvRxTask( void *pvParameters )
 {
 char Recdstring[15] = "";
+
+	xil_printf("prvRxTask is executing in %s\r\n",xPortGetCPUModeStr());
 
 	for( ;; )
 	{

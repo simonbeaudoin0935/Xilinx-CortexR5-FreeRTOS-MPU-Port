@@ -63,17 +63,17 @@ __psu_r5_ddr_0_MEM_0_size  = LENGTH(psu_r5_ddr_0_MEM_0);
 } > psu_r5_ddr_0_MEM_0
 
 
-.privileged_functions  :
+privileged_functions  : ALIGN()
 {
   __privileged_functions_start = .; /* create symbol for start of section */
-  KEEP(*(.privileged_functions))    /* keep my variable even if not referenced */
+  KEEP(*(privileged_functions))    /* keep my variable even if not referenced */
   __privileged_functions_end = .;   /* create symbol for end of section */
 } > psu_r5_ddr_0_MEM_0
 
-.privileged_data  :
+privileged_data  : ALIGN()
 {
   __privileged_data_start = .; /* create symbol for start of section */
-  KEEP(*(.privileged_data))    /* keep my variable even if not referenced */
+  KEEP(*(privileged_data))    /* keep my variable even if not referenced */
   __privileged_data_end = .;   /* create symbol for end of section */
 } > psu_r5_ddr_0_MEM_0
 
