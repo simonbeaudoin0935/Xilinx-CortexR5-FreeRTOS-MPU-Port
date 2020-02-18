@@ -11,7 +11,7 @@
 /*******************************************************************/
 
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x2000;
-_HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x2000;
+_HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x00010000;
 
 _ABORT_STACK_SIZE = DEFINED(_ABORT_STACK_SIZE) ? _ABORT_STACK_SIZE : 1024;
 _SUPERVISOR_STACK_SIZE = DEFINED(_SUPERVISOR_STACK_SIZE) ? _SUPERVISOR_STACK_SIZE : 2048;
@@ -27,7 +27,9 @@ MEMORY
    psu_qspi_linear_0_MEM_0 : ORIGIN = 0xC0000000, LENGTH = 0x20000000
    psu_r5_0_atcm_MEM_0 : ORIGIN = 0x0, LENGTH = 0x10000
    psu_r5_0_btcm_MEM_0 : ORIGIN = 0x20000, LENGTH = 0x10000
-   psu_r5_ddr_0_MEM_0 : ORIGIN = 0x100000, LENGTH = 0x100000
+   psu_r5_ddr_0_MEM_0 : ORIGIN = 0x00100000, LENGTH = 0x00100000
+   psu_r5_ddr_privileged_functions : ORIGIN = 0x00200000, LENGTH = 0x00010000
+   psu_r5_ddr_privileged_data : ORIGIN = 0x00210000, LENGTH = 0x00010000 
    psu_r5_tcm_ram_0_MEM_0 : ORIGIN = 0x0, LENGTH = 0x40000
 }
 
@@ -39,9 +41,9 @@ ENTRY(_boot)
 
 SECTIONS
 {
-__psu_r5_ddr_0_MEM_0_start = ORIGIN(psu_r5_ddr_0_MEM_0);
-__psu_r5_ddr_0_MEM_0_end   = ORIGIN(psu_r5_ddr_0_MEM_0) + LENGTH(psu_r5_ddr_0_MEM_0);
-__psu_r5_ddr_0_MEM_0_size  = LENGTH(psu_r5_ddr_0_MEM_0);
+__psu_r5_ddr_0_MEM_0_start__ = ORIGIN(psu_r5_ddr_0_MEM_0);
+__psu_r5_ddr_0_MEM_0_end__   = ORIGIN(psu_r5_ddr_0_MEM_0) + LENGTH(psu_r5_ddr_0_MEM_0);
+__psu_r5_ddr_0_MEM_0_size__  = LENGTH(psu_r5_ddr_0_MEM_0);
 
 .vectors : {
    KEEP (*(.vectors))
@@ -63,21 +65,22 @@ __psu_r5_ddr_0_MEM_0_size  = LENGTH(psu_r5_ddr_0_MEM_0);
 } > psu_r5_ddr_0_MEM_0
 
 
-privileged_functions  : ALIGN()
+privileged_functions  : 
 {
-  __privileged_functions_start = .; /* create symbol for start of section */
+  __privileged_functions_start__ = .; /* create symbol for start of section */
   KEEP(*(privileged_functions))    /* keep my variable even if not referenced */
-  __privileged_functions_end = .;   /* create symbol for end of section */
-} > psu_r5_ddr_0_MEM_0
+  __privileged_functions_end__ = .; /* create symbol for end of section */
+} > psu_r5_ddr_privileged_functions
 
-privileged_data  : ALIGN()
+privileged_data  : 
 {
-  __privileged_data_start = .; /* create symbol for start of section */
+  __privileged_data_start__ = .; /* create symbol for start of section */
   KEEP(*(privileged_data))    /* keep my variable even if not referenced */
-  __privileged_data_end = .;   /* create symbol for end of section */
-} > psu_r5_ddr_0_MEM_0
+   __privileged_data_end__ = .; /* create symbol for end of section */
+} > psu_r5_ddr_privileged_data
 
-
+ 
+  
 .init : {
    KEEP (*(.init))
 } > psu_r5_ddr_0_MEM_0
