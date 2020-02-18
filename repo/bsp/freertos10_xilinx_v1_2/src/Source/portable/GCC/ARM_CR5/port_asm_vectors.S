@@ -43,7 +43,7 @@
 .section .vectors,"a"
 _vector_table:
 	ldr	pc,=_boot
-	ldr	pc,=Undefined
+	ldr	pc,=UndefinedHandler
 	ldr   pc, _swi
 	ldr	pc,=PrefetchAbortHandler
 	ldr	pc,=DataAbortHandler
