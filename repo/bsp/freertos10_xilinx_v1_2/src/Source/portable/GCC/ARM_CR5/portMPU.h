@@ -80,6 +80,7 @@ void vPortResetPrivilege( BaseType_t xRunningPrivileged );
 
 BaseType_t xPortRaisePrivilege( void );
 
+void setupMPU(void) __attribute__((weak));
 
 
 #ifdef __cplusplus

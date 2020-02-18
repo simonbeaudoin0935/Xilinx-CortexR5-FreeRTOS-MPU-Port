@@ -487,6 +487,8 @@ uint32_t ulAPSR, ulCycles = 8; /* 8 bits per byte. */
 			executing. */
 			portCPU_IRQ_DISABLE();
 
+            setupMPU();
+
 			/* Start the timer that generates the tick ISR. */
 			configSETUP_TICK_INTERRUPT();
 

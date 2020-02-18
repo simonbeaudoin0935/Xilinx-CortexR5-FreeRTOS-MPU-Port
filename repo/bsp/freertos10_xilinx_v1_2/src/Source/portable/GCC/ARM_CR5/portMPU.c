@@ -3,6 +3,8 @@
 
 #if( portUSING_MPU_WRAPPERS == 1 )
 
+
+
 void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMORY_REGION * const xRegions, StackType_t *pxBottomOfStack, uint32_t ulStackDepth )
 {
     extern uint32_t __privileged_data_start[];
@@ -98,6 +100,11 @@ BaseType_t xPortRaisePrivilege( void )
 	 else{
 		 return pdFALSE;
 	 }
+}
+
+void setupMPU(void)
+{
+
 }
 
 #endif

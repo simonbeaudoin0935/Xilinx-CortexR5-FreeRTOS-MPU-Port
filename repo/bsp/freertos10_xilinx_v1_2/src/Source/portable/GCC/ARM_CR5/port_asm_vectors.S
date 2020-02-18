@@ -62,23 +62,23 @@ FIQLoop:
 	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
 	subs	pc, lr, #4			/* adjust return */
 
-Undefined:					/* Undefined handler */
-	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-	b	_prestart
-	movs	pc, lr
+//Undefined:					/* Undefined handler */
+//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
+//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
+//	b	_prestart
+//	movs	pc, lr
 
-DataAbortHandler:				/* Data Abort handler */
-	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-	bl	DataAbortInterrupt		/*DataAbortInterrupt :call C function here */
-	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-	subs	pc, lr, #8			/* adjust return */
+//DataAbortHandler:				/* Data Abort handler */
+//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
+//	bl	DataAbortInterrupt		/*DataAbortInterrupt :call C function here */
+//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
+//	subs	pc, lr, #8			/* adjust return */
 
-PrefetchAbortHandler:				/* Prefetch Abort handler */
-	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-	bl	PrefetchAbortInterrupt		/* PrefetchAbortInterrupt: call C function here */
-	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-	subs	pc, lr, #4			/* adjust return */
+//PrefetchAbortHandler:				/* Prefetch Abort handler */
+//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
+//	bl	PrefetchAbortInterrupt		/* PrefetchAbortInterrupt: call C function here */
+//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
+//	subs	pc, lr, #4			/* adjust return */
 
 
 .end
