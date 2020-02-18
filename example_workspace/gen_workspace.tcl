@@ -20,6 +20,9 @@ createbsp -name RPU0_bsp -proc psu_cortexr5_0 -hwproject ZCU102_hw_platform -os 
 #Configure the bsp for using mpu 
 configbsp -bsp RPU0_bsp use_mpu_support true
 
+configbsp -bsp RPU0_bsp stdin  psu_uart_1
+configbsp -bsp RPU0_bsp stdout psu_uart_1
+
 #Regenerate both BSPs 
 regenbsp -bsp RPU0_bsp
 
