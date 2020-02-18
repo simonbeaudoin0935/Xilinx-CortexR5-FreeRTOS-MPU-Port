@@ -11,11 +11,11 @@ setws -switch "$current_path"
 repo -set "../repo"
 
 #Create HW project based on ZCU102 template, which is fine for exmple purpose
-createhw -name ZCU102_hw_platform -hwspec $SDK_path/data/embeddedsw/lib/hwplatform_templates/ZCU102_hw_platform/system.hdf
+createhw -name HW_Platform -hwspec system.hdf
 
 
 #create BSPs for RPU0
-createbsp -name RPU0_bsp -proc psu_cortexr5_0 -hwproject ZCU102_hw_platform -os freertos10_xilinx
+createbsp -name RPU0_bsp -proc psu_cortexr5_0 -hwproject HW_Platform -os freertos10_xilinx
 
 #Configure the bsp for using mpu 
 configbsp -bsp RPU0_bsp use_mpu_support true

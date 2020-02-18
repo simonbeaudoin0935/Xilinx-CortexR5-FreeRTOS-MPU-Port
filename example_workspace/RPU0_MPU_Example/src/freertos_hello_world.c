@@ -128,6 +128,10 @@ long RxtaskCntr = 0;
 StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 
+void setupMPU(void){
+	xil_printf("MPU setup!\r\n");
+}
+
 int main( void )
 {
 	const TickType_t x10seconds = pdMS_TO_TICKS( DELAY_10_SECONDS );
