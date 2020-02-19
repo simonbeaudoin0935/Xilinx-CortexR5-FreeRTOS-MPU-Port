@@ -125,8 +125,8 @@ char HWstring[15] = "Hello World";
 long RxtaskCntr = 0;
 
 #define STACK_DEPTH 512
-StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
-StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
+StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t)), section(".task_stack")));
+StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t)), section(".task_stack")));
 
 
 

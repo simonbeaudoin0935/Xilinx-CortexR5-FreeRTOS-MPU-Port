@@ -30,7 +30,8 @@ MEMORY
    psu_r5_ddr_0_MEM_0 : ORIGIN = 0x00100000, LENGTH = 0x00100000
    psu_r5_ddr_privileged_functions : ORIGIN = 0x00200000, LENGTH = 0x00010000
    psu_r5_ddr_privileged_data : ORIGIN = 0x00210000, LENGTH = 0x00010000 
-   psu_r5_tcm_ram_0_MEM_0 : ORIGIN = 0x0, LENGTH = 0x40000
+   psu_r5_ddr_task_stack : ORIGIN = 0x00220000, LENGTH = 0x00010000
+   newMemory8  : ORIGIN = 0x0, LENGTH = 0x0
 }
 
 /* Specify the default entry point to the program */
@@ -65,21 +66,23 @@ __psu_r5_ddr_0_MEM_0_size__  = LENGTH(psu_r5_ddr_0_MEM_0);
 } > psu_r5_ddr_0_MEM_0
 
 
-privileged_functions  : 
+.privileged_functions  : 
 {
   __privileged_functions_start__ = .; /* create symbol for start of section */
-  KEEP(*(privileged_functions))    /* keep my variable even if not referenced */
+  KEEP(*(.privileged_functions))    /* keep my variable even if not referenced */
   __privileged_functions_end__ = .; /* create symbol for end of section */
 } > psu_r5_ddr_privileged_functions
 
-privileged_data  : 
+.privileged_data  : 
 {
   __privileged_data_start__ = .; /* create symbol for start of section */
-  KEEP(*(privileged_data))    /* keep my variable even if not referenced */
+  KEEP(*(.privileged_data))    /* keep my variable even if not referenced */
    __privileged_data_end__ = .; /* create symbol for end of section */
 } > psu_r5_ddr_privileged_data
 
- 
+ .task_stack : {
+ 	KEEP (*(.task_stack))
+ } > psu_r5_ddr_task_stack
   
 .init : {
    KEEP (*(.init))
