@@ -32,23 +32,6 @@ void setupMPU(void){
 
 	Xil_DisableMPU();
 
-	/* Privileged functions are read only for privileged */
-	Xil_DisableMPURegionByRegNum(10);
-	Xil_SetMPURegionByRegNum(10,
-							(INTPTR) __privileged_functions_start__,
-							__privileged_functions_size__,
-							PRIV_RO_USER_NA | NORM_NSHARED_WB_WA);
-
-	/* Privileged data is read write for privileged */
-	Xil_DisableMPURegionByRegNum(11);
-	Xil_SetMPURegionByRegNum(11,
-							(INTPTR) __privileged_data_start__,
-							__privileged_data_size__,
-							PRIV_RW_USER_NA | NORM_NSHARED_WB_WA | EXECUTE_NEVER);
-
-	Xil_EnableMPU();
-
-	return;
 
 	/* Mark whole address space as non accessible */
 	Xil_DisableMPURegionByRegNum(0);
@@ -145,6 +128,8 @@ void setupMPU(void){
 							(INTPTR) __privileged_data_start__,
 							__privileged_data_size__,
 							PRIV_RW_USER_NA | NORM_NSHARED_WB_WA | EXECUTE_NEVER);
+
+	Xil_DisableMPURegionByRegNum(11);
 
 	Xil_EnableMPU();
 	/* This leaves region 11, 12, 13, 14, 15 for user  */

@@ -124,7 +124,7 @@ static TimerHandle_t xTimer = NULL;
 char HWstring[15] = "Hello World";
 long RxtaskCntr = 0;
 
-#define STACK_DEPTH 128
+#define STACK_DEPTH 512
 StackType_t task_tx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 StackType_t task_rx_stack[STACK_DEPTH] __attribute__((aligned(STACK_DEPTH*sizeof(StackType_t))));
 
@@ -151,12 +151,12 @@ int main( void )
 	Rx task, so the Rx task will leave the Blocked state and pre-empt the Tx
 	task as soon as the Tx task places an item in the queue. */
 
-
-
+	xil_printf("Tx task stack address : 0x%08X\r\n",task_tx_stack);
+	xil_printf("Rx task stack address : 0x%08X\r\n",task_rx_stack);
 	const TaskParameters_t paramsTx =
 	{
 		prvTxTask,
-		"Tx",
+		"TX",
 		STACK_DEPTH,
 		xQueue,
 		tskIDLE_PRIORITY,
@@ -173,7 +173,7 @@ int main( void )
 	const TaskParameters_t paramsRx =
 	{
 		prvRxTask,
-		"GB",
+		"RX",
 		STACK_DEPTH,
 		xQueue,
 		tskIDLE_PRIORITY,
@@ -257,13 +257,20 @@ char Recdstring[15] = "";
 						Recdstring,	/* Data is read into this address. */
 						portMAX_DELAY );	/* Wait without a timeout for data. */
 
-		BaseType_t raise = xPortRaisePrivilege();
-			xil_printf("NOW, prvRxTask is executing in %s\r\n",xPortGetCPUModeStr());
-		vPortResetPrivilege(raise);
+
 
 		/* Print the received data. */
 		xil_printf( "Rx task received string from Tx task: %s\r\n", Recdstring );
-		RxtaskCntr++;
+
+		BaseType_t raise = xPortRaisePrivilege();
+		{
+			xil_printf("NOW, prvRxTask is executing in %s\r\n",xPortGetCPUModeStr());
+			RxtaskCntr++;
+		}
+		vPortResetPrivilege(raise);
+
+		xil_printf("NOW, prvRxTask is executing in %s\r\n",xPortGetCPUModeStr());
+
 	}
 }
 
