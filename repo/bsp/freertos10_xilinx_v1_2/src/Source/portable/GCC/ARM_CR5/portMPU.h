@@ -58,9 +58,8 @@ typedef struct MPU_SETTINGS
 #warning "Check numbers here for swi"
 
 /* SVC numbers for various services. */
-#define portSVC_START_SCHEDULER				0
+#define portSVC_RAISE_PRIVILEGE				0
 #define portSVC_YIELD						1
-#define portSVC_RAISE_PRIVILEGE				2
 
 #warning "check the portNVIC thing"
 //#define portYIELD_WITHIN_API() 													\
@@ -80,7 +79,9 @@ void vPortResetPrivilege( BaseType_t xRunningPrivileged );
 
 BaseType_t xPortRaisePrivilege( void );
 
-void setupMPU(void) __attribute__((weak));
+//void setupMPU(void) __attribute__((weak));
+
+//void vSVCOutOfRangeHandler(void) __attribute__((weak));
 
 const char* xPortGetCPUModeStr(void);
 

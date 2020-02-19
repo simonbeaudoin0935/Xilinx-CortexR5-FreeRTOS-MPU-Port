@@ -33,6 +33,8 @@
 	.set SVC_MODE,	0x13
 	.set IRQ_MODE,	0x12
 
+    .set MAX_SVC,	2
+
 	/* Hardware registers. */
 	.extern ulICCIAR
 	.extern ulICCEOIR
@@ -95,6 +97,106 @@
 	LDR		R1, [R0]
 	LDR		SP, [R1]
 
+
+
+
+
+//**************************************************************
+
+    /* We program the register number 12*/
+    MOV     R0, #12
+    MCR     p15, 0, R0, c6,  c2, 0 //MPU_MEMORY_REG_NUMBER
+    ISB
+
+    /* Program the basse address of the stack */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
+
+    /* Program the size of the stack */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
+
+    /* Program the access control of the stack */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
+
+//**************************************************************
+
+    /* We program the register number 13*/
+    MOV     R0, #13
+    MCR     p15, 0, R0, c6,  c2, 0 //MPU_MEMORY_REG_NUMBER
+    ISB
+
+    /* Program the basse address of region 1 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
+
+    /* Program the size of region 1*/
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
+
+    /* Program the access control of region 1 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
+
+//**************************************************************
+
+    /* We program the register number 14*/
+    MOV     R0, #14
+    MCR     p15, 0, R0, c6,  c2, 0 //MPU_MEMORY_REG_NUMBER
+    ISB
+
+    /* Program the basse address of region 2 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
+
+    /* Program the size of region 2*/
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
+
+    /* Program the access control of region 2 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
+
+
+//**************************************************************
+
+    /* We program the register number 15*/
+    MOV     R0, #15
+    MCR     p15, 0, R0, c6,  c2, 0 //MPU_MEMORY_REG_NUMBER
+    ISB
+
+    /* Program the basse address of region 3 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
+
+    /* Program the size of region 3*/
+    SUB     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
+
+    /* Program the access control of region 3 */
+    SUB     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
+
+
+
+
 	/* Is there a floating point context to restore?  If the restored
 	ulPortTaskHasFPUContext is zero then no. */
 	LDR		R0, ulPortTaskHasFPUContextConst
@@ -141,11 +243,43 @@
 .align 4
 .type FreeRTOS_SWI_Handler, %function
 FreeRTOS_SWI_Handler:
-	/* Save the context of the current task and select a new task to run. */
-	portSAVE_CONTEXT
-	LDR R0, vTaskSwitchContextConst
-	BLX	R0
-	portRESTORE_CONTEXT
+
+    PUSH    {R0-R12, LR}            /* Store registers */
+    LDR     R0, [lr, #-4]           /* Calculate address of SVC instruction */
+                                    /* and load it into R0. */
+    BIC     R0, R0, #0xFF000000     /* Mask off top 8 bits of instruction */
+                                    /* to give SVC number. */
+
+    CMP     R0, #MAX_SVC            /* Range check */
+    LDRLS   PC, [PC, R0, LSL #2]    /* If the range is ok, load address of svc code from jump table below*/
+    B       .SVCOutOfRange           /* If landing here, svc number was out of range */
+
+.SVCJumpTable:    
+    .word     .SVCnum0
+    .word     .SVCnum1
+ 
+.SVCnum0:                             /* SVC #1 is a context switch request */
+    POP    {R0-R12, LR}             /* Put back the registers as they were entering the svc */
+	portSAVE_CONTEXT                /* Save the context */
+	LDR R0, vTaskSwitchContextConst /* load the address of the switch task c function */
+	BLX	R0                          /* Execute that function */
+	portRESTORE_CONTEXT             /* Switch to the context of that task */
+
+.SVCnum1:                             /* SVC #0 is a privilege elevation request */
+    MRS     R0, SPSR                /* Load the saved CPSR into R0 */
+    ORR     R0, R0, #SYS_MODE       /* Set the mode bits for system mode in spsr */
+    MSR     SPSR, R0                /* Put back the altered spsr in it's register*/
+    POP     {R0-R12, LR}            /* Put back the registers as they were entering the svc */
+    MOVS    PC, LR                  /* Return from SVC. Puts back cpsr */  
+
+
+
+.SVCOutOfRange:
+
+	LDR		R0, vSVCOutOfRangeHandlerConst
+	BLX		R0
+
+
 
 
 /******************************************************************************
@@ -275,5 +409,6 @@ ulMaxAPIPriorityMaskConst: .word ulMaxAPIPriorityMask
 vTaskSwitchContextConst: .word vTaskSwitchContext
 vApplicationIRQHandlerConst: .word vApplicationIRQHandler
 ulPortInterruptNestingConst: .word ulPortInterruptNesting
+vSVCOutOfRangeHandlerConst: .word vSVCOutOfRangeHandler
 
 .end

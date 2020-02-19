@@ -257,6 +257,10 @@ char Recdstring[15] = "";
 						Recdstring,	/* Data is read into this address. */
 						portMAX_DELAY );	/* Wait without a timeout for data. */
 
+		BaseType_t raise = xPortRaisePrivilege();
+			xil_printf("NOW, prvRxTask is executing in %s\r\n",xPortGetCPUModeStr());
+		vPortResetPrivilege(raise);
+
 		/* Print the received data. */
 		xil_printf( "Rx task received string from Tx task: %s\r\n", Recdstring );
 		RxtaskCntr++;

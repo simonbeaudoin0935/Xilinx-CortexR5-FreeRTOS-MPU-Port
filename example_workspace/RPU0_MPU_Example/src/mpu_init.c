@@ -5,7 +5,6 @@
 
 /* setup MPU is declared as a weak function in bsp, which means that this one will have preseence over it. */
 void setupMPU(void){
-	xil_printf("MPU setup!\r\n");
 
 	extern uint32_t __privileged_functions_start__[];
 	extern uint32_t __privileged_functions_end__[];
@@ -30,7 +29,26 @@ void setupMPU(void){
 	xil_printf("__privileged_data_end   : 0x%08X\r\n", __privileged_data_end__);
 	xil_printf("__privileged_data_size  : 0x%08X\r\n", __privileged_data_size__);
 
+
 	Xil_DisableMPU();
+
+	/* Privileged functions are read only for privileged */
+	Xil_DisableMPURegionByRegNum(10);
+	Xil_SetMPURegionByRegNum(10,
+							(INTPTR) __privileged_functions_start__,
+							__privileged_functions_size__,
+							PRIV_RO_USER_NA | NORM_NSHARED_WB_WA);
+
+	/* Privileged data is read write for privileged */
+	Xil_DisableMPURegionByRegNum(11);
+	Xil_SetMPURegionByRegNum(11,
+							(INTPTR) __privileged_data_start__,
+							__privileged_data_size__,
+							PRIV_RW_USER_NA | NORM_NSHARED_WB_WA | EXECUTE_NEVER);
+
+	Xil_EnableMPU();
+
+	return;
 
 	/* Mark whole address space as non accessible */
 	Xil_DisableMPURegionByRegNum(0);

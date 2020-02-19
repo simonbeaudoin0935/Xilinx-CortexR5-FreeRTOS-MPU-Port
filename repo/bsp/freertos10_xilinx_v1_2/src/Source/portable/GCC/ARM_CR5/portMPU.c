@@ -2,19 +2,67 @@
 #include "task.h"
 #include "xpseudo_asm_gcc.h"
 #include "xreg_cortexr5.h"
+#include "xil_printf.h"
 
 #if( portUSING_MPU_WRAPPERS == 1 )
 
+static const struct {
+	u64 size;
+	unsigned int encoding;
+}region_size[] = {
+	{ 0x20, REGION_32B },
+	{ 0x40, REGION_64B },
+	{ 0x80, REGION_128B },
+	{ 0x100, REGION_256B },
+	{ 0x200, REGION_512B },
+	{ 0x400, REGION_1K },
+	{ 0x800, REGION_2K },
+	{ 0x1000, REGION_4K },
+	{ 0x2000, REGION_8K },
+	{ 0x4000, REGION_16K },
+	{ 0x8000, REGION_32K },
+	{ 0x10000, REGION_64K },
+	{ 0x20000, REGION_128K },
+	{ 0x40000, REGION_256K },
+	{ 0x80000, REGION_512K },
+	{ 0x100000, REGION_1M },
+	{ 0x200000, REGION_2M },
+	{ 0x400000, REGION_4M },
+	{ 0x800000, REGION_8M },
+	{ 0x1000000, REGION_16M },
+	{ 0x2000000, REGION_32M },
+	{ 0x4000000, REGION_64M },
+	{ 0x8000000, REGION_128M },
+	{ 0x10000000, REGION_256M },
+	{ 0x20000000, REGION_512M },
+	{ 0x40000000, REGION_1G },
+	{ 0x80000000, REGION_2G },
+	{ 0x100000000, REGION_4G },
+};
 
+uint32_t getSizeEncoding(uint32_t size)
+{
+    uint32_t Regionsize;
+
+	/* Lookup the size.  */
+	for (size_t i = 0; i < sizeof region_size / sizeof region_size[0]; i++) {
+		if (size <= region_size[i].size) {
+			Regionsize = region_size[i].encoding;
+			break;
+		}
+	}
+
+    return Regionsize;
+}
 
 void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMORY_REGION * const xRegions, StackType_t *pxBottomOfStack, uint32_t ulStackDepth )
 {
     /* First region is stack, always fill it. */
 	xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress = pxBottomOfStack;
 
-	xMPUSettings->xRegion[ 0 ].ulRegionSize = ulStackDepth;
+	xMPUSettings->xRegion[ 0 ].ulRegionSize = (getSizeEncoding(ulStackDepth) << 1) | REGION_EN;
 
-	xMPUSettings->xRegion[ 0 ].ulRegionAttribute = PRIV_RW_USER_RW | NORM_NSHARED_WB_WA | EXECUTE_NEVER
+	xMPUSettings->xRegion[ 0 ].ulRegionAttribute = PRIV_RW_USER_RW | NORM_NSHARED_WB_WA | EXECUTE_NEVER;
 
     if( xRegions == NULL )
 	{
@@ -35,7 +83,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMOR
 			if( ( xRegions[ lIndex ] ).ulLengthInBytes > 0UL )
 			{
 				xMPUSettings->xRegion[ i ].ulRegionBaseAddress = ( uint32_t ) xRegions[ lIndex ].pvBaseAddress;
-                xMPUSettings->xRegion[ i ].ulRegionSize        = ( uint32_t ) xRegions[ lIndex ].ulLengthInBytes;
+                xMPUSettings->xRegion[ i ].ulRegionSize        = (getSizeEncoding(( uint32_t ) xRegions[ lIndex ].ulLengthInBytes) << 1 )| REGION_EN;
 				xMPUSettings->xRegion[ i ].ulRegionAttribute   = xRegions[lIndex].ulParameters;
 
 			}
@@ -81,7 +129,7 @@ BaseType_t xPortRaisePrivilege( void )
 
 	if ((mfcpsr() & XREG_CPSR_MODE_BITS) == XREG_CPSR_USER_MODE)
 	{
-		__asm__ __volatile__("SWI %0 ":: "i"(portSVC_RAISE_PRIVILEGE): "memory");
+		__asm__ __volatile__("SWI 1"::: "memory");
 		 
 		//xil_printf("Task asked and raised its priviledge\r\n");
 		wasUserMode = pdTRUE;
@@ -125,9 +173,16 @@ const char* xPortGetCPUModeStr(void)
 }
 
 
-void setupMPU(void)
+__attribute__((weak)) void setupMPU(void)
 {
+    xil_printf("MPU Regions were left as they were in mpu.c\r\n");
+}
 
+
+
+__attribute__((weak)) void vSVCOutOfRangeHandler(void)
+{
+    xil_printf("SVC number out of range\r\n");
 }
 
 #endif
