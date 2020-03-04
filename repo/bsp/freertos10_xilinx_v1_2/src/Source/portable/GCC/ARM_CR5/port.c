@@ -487,6 +487,8 @@ uint32_t ulAPSR, ulCycles = 8; /* 8 bits per byte. */
 			executing. */
 			portCPU_IRQ_DISABLE();
 
+			void setupMPU(void);
+
             setupMPU();
 
 			/* Start the timer that generates the tick ISR. */
@@ -685,5 +687,351 @@ uint32_t ulReturn;
 	}
 
 #endif /* configASSERT_DEFINED */
+
+static const struct {
+	u64 size;
+	unsigned int encoding;
+}region_size[] = {
+	{ 0x20, REGION_32B },
+	{ 0x40, REGION_64B },
+	{ 0x80, REGION_128B },
+	{ 0x100, REGION_256B },
+	{ 0x200, REGION_512B },
+	{ 0x400, REGION_1K },
+	{ 0x800, REGION_2K },
+	{ 0x1000, REGION_4K },
+	{ 0x2000, REGION_8K },
+	{ 0x4000, REGION_16K },
+	{ 0x8000, REGION_32K },
+	{ 0x10000, REGION_64K },
+	{ 0x20000, REGION_128K },
+	{ 0x40000, REGION_256K },
+	{ 0x80000, REGION_512K },
+	{ 0x100000, REGION_1M },
+	{ 0x200000, REGION_2M },
+	{ 0x400000, REGION_4M },
+	{ 0x800000, REGION_8M },
+	{ 0x1000000, REGION_16M },
+	{ 0x2000000, REGION_32M },
+	{ 0x4000000, REGION_64M },
+	{ 0x8000000, REGION_128M },
+	{ 0x10000000, REGION_256M },
+	{ 0x20000000, REGION_512M },
+	{ 0x40000000, REGION_1G },
+	{ 0x80000000, REGION_2G },
+	{ 0x100000000, REGION_4G },
+};
+
+uint32_t getSizeEncoding(uint32_t size)
+{
+    uint32_t Regionsize = 0;
+
+	/* Lookup the size.  */
+	for (size_t i = 0; i < sizeof region_size / sizeof region_size[0]; i++) {
+		if (size <= region_size[i].size) {
+			Regionsize = region_size[i].encoding;
+			break;
+		}
+	}
+
+    return Regionsize;
+}
+
+void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMORY_REGION * const xRegions, StackType_t *pxBottomOfStack, uint32_t ulStackDepth )
+{
+	/* Called at task creation */
+	if(pxBottomOfStack != NULL)
+	{
+
+		/* Stack depth is in word, we want bytes  */
+		ulStackDepth *= 4;
+
+	    /* First region is stack, always fill it. */
+		xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress = (uint32_t) pxBottomOfStack;
+
+		xMPUSettings->xRegion[ 0 ].ulRegionSize = (getSizeEncoding(ulStackDepth) << 1) | REGION_EN;
+
+		xMPUSettings->xRegion[ 0 ].ulRegionAttribute = PRIV_RW_USER_RW | NORM_NSHARED_WB_WA | EXECUTE_NEVER;
+	
+		/* Caller passed nothing, Invalidate all other regions. */
+		if( xRegions == NULL )
+		{
+			
+			for( size_t i = 1; i <= portNUM_CONFIGURABLE_REGIONS; i++ )
+			{
+			    xMPUSettings->xRegion[ i ].ulRegionBaseAddress = 0x00000000;
+    		    xMPUSettings->xRegion[ i ].ulRegionSize = 0x00000000;
+			    xMPUSettings->xRegion[ i ].ulRegionAttribute = 0UL;
+			}
+		}
+		/* Caller passed something we have to parse */
+		else
+		{
+			size_t lIndex = 0;
+			
+			for( size_t i = 1; i <= portNUM_CONFIGURABLE_REGIONS; i++ )
+			{
+				/* If the region is valid, parse it */
+				if( ( xRegions[ lIndex ] ).ulLengthInBytes > 0UL )
+				{
+					xMPUSettings->xRegion[ i ].ulRegionBaseAddress = ( uint32_t ) xRegions[ lIndex ].pvBaseAddress;
+                	xMPUSettings->xRegion[ i ].ulRegionSize        = (getSizeEncoding(( uint32_t ) xRegions[ lIndex ].ulLengthInBytes) << 1 )| REGION_EN;
+					xMPUSettings->xRegion[ i ].ulRegionAttribute   = xRegions[lIndex].ulParameters;
+				}
+				/* Otherwise, invalidate the region */
+				else
+				{
+					/* Invalidate the region. */
+			        xMPUSettings->xRegion[ i ].ulRegionBaseAddress = 0x00000000;
+    		        xMPUSettings->xRegion[ i ].ulRegionSize        = 0x00000000;
+			        xMPUSettings->xRegion[ i ].ulRegionAttribute   = 0UL;
+				}
+
+                lIndex++;
+			}
+		}
+	}
+
+	/* Stack pointer is null, the OS wants to update mpu regions of a task */
+	else
+	{
+		size_t lIndex = 0;
+
+		
+
+		vPortEnterCritical();
+
+		{
+			/* User defined regions start at 13 */
+			size_t mpuRegionNumber = 13;
+			
+			extern StaticTask_t * volatile pxCurrentTCB;
+
+			/* Big hack to check if the running task is the one requested to modify its MPU regions, based on the pointer received  */
+			size_t isCurrentTask = ((&pxCurrentTCB->xDummy2) == xMPUSettings) ? 1 : 0;
+
+			for( size_t i = 1; i <= portNUM_CONFIGURABLE_REGIONS; i++ )
+			{
+				/* The region is valid, parse it */
+				if( ( xRegions[ lIndex ] ).ulLengthInBytes > 0UL )
+				{
+					xMPUSettings->xRegion[ i ].ulRegionBaseAddress = ( uint32_t ) xRegions[ lIndex ].pvBaseAddress;
+	                xMPUSettings->xRegion[ i ].ulRegionSize        = (getSizeEncoding(( uint32_t ) xRegions[ lIndex ].ulLengthInBytes) << 1 )| REGION_EN;
+					xMPUSettings->xRegion[ i ].ulRegionAttribute   = xRegions[lIndex].ulParameters;
+	
+				}
+				/* Invalidate it */
+				else
+				{
+					/* Invalidate the region. */
+			        xMPUSettings->xRegion[ i ].ulRegionBaseAddress = 0x00000000;
+	    	        xMPUSettings->xRegion[ i ].ulRegionSize        = 0x00000000;
+			        xMPUSettings->xRegion[ i ].ulRegionAttribute   = 0UL;
+				}
+	
+				lIndex++;
+	
+				/* If it's the current task, update right now the MPU registers because the calling task might need the regions active right now */
+				if(isCurrentTask)
+				{
+					dsb();
+					mtcp(XREG_CP15_MPU_MEMORY_REG_NUMBER,mpuRegionNumber);
+					isb();
+					mtcp(XREG_CP15_MPU_REG_BASEADDR,xMPUSettings->xRegion[ i ].ulRegionBaseAddress);
+					mtcp(XREG_CP15_MPU_REG_ACCESS_CTRL,xMPUSettings->xRegion[ i ].ulRegionAttribute);
+					mtcp(XREG_CP15_MPU_REG_SIZE_EN,xMPUSettings->xRegion[ i ].ulRegionSize);
+					dsb();
+					isb();						/* synchronize context on this processor */
+
+					mpuRegionNumber++;
+				}
+			}
+		}
+
+		vPortExitCritical();
+	}
+
+}
+
+int32_t vPortTaskAllocateNextMPURegion( TaskHandle_t xTask, const MemoryRegion_t * const pxRegions )
+{
+	int32_t mpuRegionNumber = -1;
+
+	BaseType_t xRunningPrivileged = xPortRaisePrivilege();
+
+	vPortEnterCritical();
+	{
+		extern StaticTask_t * volatile pxCurrentTCB;
+
+		/* Get the array of mpu settings*/
+		xMPU_SETTINGS *xMPUSettings = (xTask == NULL) ? (&(pxCurrentTCB->xDummy2)) : &(((StaticTask_t *)xTask)->xDummy2);
+
+		/* Is is request from the running task? */
+		size_t isCurrentTask = (xTask == NULL) ? 1 : 0;
+
+		/* We start at 1, because index 0 is the stack region, we don't want to mess with that */
+		for( size_t i = 1; i <= portNUM_CONFIGURABLE_REGIONS; i++ )
+		{
+			if( (( xMPUSettings->xRegion[ i ] ).ulRegionBaseAddress == 0)  && (( xMPUSettings->xRegion[ i ] ).ulRegionSize == 0) && (( xMPUSettings->xRegion[ i ] ).ulRegionAttribute == 0))
+			{
+				/* We found a region. */
+				xMPUSettings->xRegion[ i ].ulRegionBaseAddress = ( uint32_t ) pxRegions->pvBaseAddress;
+                xMPUSettings->xRegion[ i ].ulRegionSize        = (getSizeEncoding(( uint32_t ) pxRegions->ulLengthInBytes) << 1 )| REGION_EN;
+				xMPUSettings->xRegion[ i ].ulRegionAttribute   = pxRegions->ulParameters;
+
+				mpuRegionNumber = i;
+
+				/* If it's the current task, update right now the MPU registers because the calling task might need the regions active right now */
+				if(isCurrentTask)
+				{
+					dsb();
+					mtcp(XREG_CP15_MPU_MEMORY_REG_NUMBER, 12 + mpuRegionNumber);
+					isb();
+					mtcp(XREG_CP15_MPU_REG_BASEADDR,xMPUSettings->xRegion[ i ].ulRegionBaseAddress);
+					mtcp(XREG_CP15_MPU_REG_ACCESS_CTRL,xMPUSettings->xRegion[ i ].ulRegionAttribute);
+					mtcp(XREG_CP15_MPU_REG_SIZE_EN,xMPUSettings->xRegion[ i ].ulRegionSize);
+					dsb();
+					isb();						/* synchronize context on this processor */
+
+				}
+				
+				break;;
+			}	
+		}
+	
+	}
+
+	vPortExitCritical();
+
+	vPortResetPrivilege( xRunningPrivileged );
+
+	return mpuRegionNumber;
+}
+
+
+void vPortTaskClearMPURegion( TaskHandle_t xTask, int32_t regionNumber)
+{
+	configASSERT( regionNumber >= 1 && regionNumber <= 3);
+
+	BaseType_t xRunningPrivileged = xPortRaisePrivilege();
+	
+	vPortEnterCritical();
+	{
+		extern StaticTask_t * volatile pxCurrentTCB;
+
+		/* Get the array of mpu settings*/
+		xMPU_SETTINGS *xMPUSettings = (xTask == NULL) ? (&(pxCurrentTCB->xDummy2)) : &(((StaticTask_t *)xTask)->xDummy2);
+
+		/* Is is request from the running task? */
+		size_t isCurrentTask = (xTask == NULL) ? 1 : 0;
+
+		/* Invalidate the region. */
+		xMPUSettings->xRegion[ regionNumber ].ulRegionBaseAddress = 0x00000000;
+		xMPUSettings->xRegion[ regionNumber ].ulRegionSize        = 0x00000000;
+		xMPUSettings->xRegion[ regionNumber ].ulRegionAttribute   = 0UL;
+
+		/* If it's the current task, Invalidate it right away */
+		if(isCurrentTask)
+		{
+			dsb();
+			mtcp(XREG_CP15_MPU_MEMORY_REG_NUMBER, 12 + regionNumber);
+			isb();
+			mtcp(XREG_CP15_MPU_REG_BASEADDR,0x00000000);
+			mtcp(XREG_CP15_MPU_REG_ACCESS_CTRL,0x00000000);
+			mtcp(XREG_CP15_MPU_REG_SIZE_EN,0UL);
+			dsb();
+			isb();						/* synchronize context on this processor */
+		}
+			
+	}
+	vPortExitCritical();
+
+	vPortResetPrivilege( xRunningPrivileged );
+}
+
+
+/*
+ * Return to user mode if xRunningPrivileged is true. This function will be used in pair
+ * with xPortRaisePrivilege. 
+ */
+void vPortResetPrivilege( BaseType_t wasUserMode )
+{
+	if( wasUserMode == pdTRUE )
+	{
+		//xil_printf("Task lowered priviledge\r\n");
+		__asm__ __volatile__ ("CPS %0" :: "i"(XREG_CPSR_USER_MODE):"memory");
+	}
+	else
+	{
+		//xil_printf("Task didn't had to lower it's priviledge priviledge\r\n");
+	}
+
+}
+
+/*
+ * Check if the current mode is user mode. If so, make a SVC call to place us in System mode and return true. 
+ * If the processor is already in any other priviledged mode, return false
+ */
+BaseType_t xPortRaisePrivilege( void )
+{
+	BaseType_t wasUserMode = pdFALSE;
+
+	if ((mfcpsr() & XREG_CPSR_MODE_BITS) == XREG_CPSR_USER_MODE)
+	{
+		__asm__ __volatile__("SWI 1"::: "memory");
+		 
+		//xil_printf("Task asked and raised its priviledge\r\n");
+		wasUserMode = pdTRUE;
+	}
+	else
+	{
+		//xil_printf("Task asked and didn't need to raised its priviledge\r\n");
+		wasUserMode = pdFALSE;
+	}
+
+	return wasUserMode;
+}
+
+const char* xPortGetCPUModeStr(void)
+{
+	switch(mfcpsr() & XREG_CPSR_MODE_BITS)
+	{
+	case XREG_CPSR_USER_MODE:
+		return "USER_MODE";
+
+	case XREG_CPSR_SYSTEM_MODE:
+		return "SYSTEM_MODE";
+
+	case XREG_CPSR_IRQ_MODE:
+		return "IRQ_MODE";
+
+	case XREG_CPSR_SVC_MODE:
+		return "SVC_MODE";
+
+	case XREG_CPSR_UNDEFINED_MODE :
+		return "UNDEFINED_MODE";
+
+	case XREG_CPSR_DATA_ABORT_MODE:
+		return "ABORT_MODE";
+
+	case XREG_CPSR_FIQ_MODE:
+		return "FIQ_MODE";
+
+	default: return "NO";
+	}
+}
+
+
+__attribute__((weak)) void setupMPU(void)
+{
+    xil_printf("MPU Regions were left as they were in mpu.c\r\n");
+}
+
+
+
+__attribute__((weak)) void vSVCOutOfRangeHandler(void)
+{
+    xil_printf("SVC number out of range\r\n");
+}
 /*-----------------------------------------------------------*/
 

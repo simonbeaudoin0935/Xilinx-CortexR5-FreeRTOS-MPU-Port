@@ -113,15 +113,17 @@
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
 
+    /* Program the access control of the stack */
+    ADD     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
+
     /* Program the size of the stack */
     ADD     R1, R1, #4
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
 
-    /* Program the access control of the stack */
-    ADD     R1, R1, #4
-    LDR     R0, [R1]  
-    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
 
 
 //**************************************************************
@@ -136,15 +138,17 @@
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
 
+    /* Program the access control of region 1 */
+    ADD     R1, R1, #4
+    LDR     R0, [R1]  
+    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
     /* Program the size of region 1*/
     ADD     R1, R1, #4
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
 
-    /* Program the access control of region 1 */
-    ADD     R1, R1, #4
-    LDR     R0, [R1]  
-    MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
+
 
 
 //**************************************************************
@@ -159,19 +163,21 @@
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
 
-    /* Program the size of region 2*/
-    ADD     R1, R1, #4
-    LDR     R0, [R1]
-    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
-
     /* Program the access control of region 2 */
     ADD     R1, R1, #4
     LDR     R0, [R1]  
     MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
 
+    /* Program the size of region 2*/
+    ADD     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
 
 
-//**************************************************************
+
+
+
+
 
     /* We program the register number 15*/
     MOV     R0, #15
@@ -183,16 +189,18 @@
     LDR     R0, [R1]
     MCR     p15, 0, R0, c6,  c1, 0 //MPU_REG_BASEADDR
 
-    /* Program the size of region 3*/
-    ADD     R1, R1, #4
-    LDR     R0, [R1]
-    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
-
     /* Program the access control of region 3 */
     ADD     R1, R1, #4
     LDR     R0, [R1]  
     MCR     p15, 0, R0, c6,  c1, 4 //MPU_REG_ACCESS_CTRL
 
+    /* Program the size of region 3*/
+    ADD     R1, R1, #4
+    LDR     R0, [R1]
+    MCR     p15, 0, R0, c6,  c1, 2 //MPU_REG_SIZE_EN
+
+
+//**************************************************************
 
 
 

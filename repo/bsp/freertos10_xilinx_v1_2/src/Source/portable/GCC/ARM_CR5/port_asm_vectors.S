@@ -62,23 +62,40 @@ FIQLoop:
 	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
 	subs	pc, lr, #4			/* adjust return */
 
-//Undefined:					/* Undefined handler */
-//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-//	b	_prestart
-//	movs	pc, lr
+/*
+Undefined:					// Undefined handler 
+	stmdb	sp!,{r0-r3,r12,lr}		// state save from compiled code 
+	ldr     r0, =UndefinedExceptionAddr
+	sub     r1, lr, #4
+	str     r1, [r0]            		// Store address of instruction causing undefined exception 
 
-//DataAbortHandler:				/* Data Abort handler */
-//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-//	bl	DataAbortInterrupt		/*DataAbortInterrupt :call C function here */
-//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-//	subs	pc, lr, #8			/* adjust return */
+	bl	UndefinedException		// UndefinedException: call C function here 
+	ldmia	sp!,{r0-r3,r12,lr}		// state restore from compiled code
+	movs	pc, lr
+*/
 
-//PrefetchAbortHandler:				/* Prefetch Abort handler */
-//	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code */
-//	bl	PrefetchAbortInterrupt		/* PrefetchAbortInterrupt: call C function here */
-//	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
-//	subs	pc, lr, #4			/* adjust return */
+/*
+DataAbortHandler:				/// Data Abort handler
+	tmdb	sp!,{r0-r3,r12,lr}		// state save from compiled code
+	ldr     r0, =DataAbortAddr
+	sub     r1, lr, #8
+	str     r1, [r0]            		// Stores instruction causing prefetch abort
+	bl	DataAbortInterrupt		// PrefetchAbortInterrupt: call C function here
+	ldmia	sp!,{r0-r3,r12,lr}		// state restore from compiled code
+	subs	pc, lr, #4
+*/
 
+/*
+PrefetchAbortHandler:				// Prefetch Abort handler
+	stmdb	sp!,{r0-r3,r12,lr}		// state save from compiled code
+	ldr     r0, =PrefetchAbortAddr
+	sub     r1, lr, #4
+	str     r1, [r0]            		// Stores instruction causing prefetch abort
+	bl	PrefetchAbortInterrupt		// PrefetchAbortInterrupt: call C function here
+	ldmia	sp!,{r0-r3,r12,lr}		// state restore from compiled code
+	movs	pc, lr
+*/
 
 .end
+
+

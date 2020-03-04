@@ -35,6 +35,86 @@
 
 /* BSP includes. */
 #include "xil_types.h"
+#include "FreeRTOS.h"
+
+
+/* Used in stack initialization */
+#define portINITIAL_SPSR_UNPRIVILEGED	XREG_CPSR_USER_MODE
+#define portINITIAL_SPSR_PRIVILEGED		XREG_CPSR_SYSTEM_MODE
+
+
+#define portPRIVILEGE_BIT			( 0x80000000UL )
+#define portUNPRIVILEGE_BIT			( 0x00000000UL )
+
+//FreeRTOS takes stack in words
+#define portSTACK_256B	(256 / sizeof(StackType_t))
+#define portSTACK_512B	(512 / sizeof(StackType_t))
+#define portSTACK_1024B	(1024 / sizeof(StackType_t))
+#define portSTACK_2048B	(2048 / sizeof(StackType_t))
+#define portSTACK_4096B	(4096 / sizeof(StackType_t))
+#define portSTACK_8192B	(8192 / sizeof(StackType_t))
+
+/* Definition of attribute to use for stacks */
+#define TASK_STACK(portSTACK_B) __attribute__(( aligned( portSTACK_B * sizeof(StackType_t) ), section(".task_stacks") ))
+
+
+//Cortex R5 MPU masks, defined in xreg_cortexr5.h
+#define portMPU_REGION_ENABLE                                   REGION_EN
+
+#define portMPU_REGION_READ_WRITE								PRIV_RW_USER_RW
+#define portMPU_REGION_PRIVILEGED_READ_ONLY						PRIV_RO_USER_NA
+#define portMPU_REGION_READ_ONLY								PRIV_RO_USER_RO
+#define portMPU_REGION_PRIVILEGED_READ_WRITE					PRIV_RW_USER_NA
+#define portMPU_REGION_PRIVILEGED_READ_WRITE_UNPRIV_READ_ONLY	PRIV_RW_USER_RO
+#define portMPU_REGION_CACHEABLE_BUFFERABLE						NORM_SHARED_WB_WA
+#define portMPU_REGION_EXECUTE_NEVER							EXECUTE_NEVER
+
+
+
+//#define portUNPRIVILEGED_FLASH_REGION         ( 0UL )
+//#define portPRIVILEGED_FLASH_REGION           ( 1UL )
+//#define portPRIVILEGED_RAM_REGION             ( 2UL )
+//#define portGENERAL_PERIPHERALS_REGION        ( 3UL )
+#define portSTACK_REGION                        ( 12UL )
+#define portFIRST_CONFIGURABLE_REGION	        ( 13UL )
+#define portLAST_CONFIGURABLE_REGION            ( 15UL )
+#define portNUM_CONFIGURABLE_REGIONS		( ( portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION ) + 1 )
+#define portTOTAL_NUM_REGIONS				( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus one to make space for the stack region. */
+
+
+typedef struct MPU_REGION_REGISTERS
+{
+	uint32_t ulRegionBaseAddress;
+	uint32_t ulRegionAttribute;
+    uint32_t ulRegionSize;
+} xMPU_REGION_REGISTERS;
+
+/* Plus 1 to create space for the stack region. */
+typedef struct MPU_SETTINGS
+{
+	xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS ];
+} xMPU_SETTINGS;
+
+
+
+/* SVC numbers for various services. */
+#define portSVC_RAISE_PRIVILEGE				0
+#define portSVC_YIELD						1
+
+
+typedef long BaseType_t;
+
+void vPortResetPrivilege( BaseType_t xRunningPrivileged );
+
+BaseType_t xPortRaisePrivilege( void );
+
+//void setupMPU(void) __attribute__((weak));
+
+//void vSVCOutOfRangeHandler(void) __attribute__((weak));
+
+const char* xPortGetCPUModeStr(void);
+
+
 
 
 
@@ -97,6 +177,12 @@ extern uint32_t ulPortYieldRequired;			\
 /*-----------------------------------------------------------
  * Critical section control
  *----------------------------------------------------------*/
+
+//int32_t vPortTaskAllocateNextMPURegion( TaskHandle_t xTask, const MemoryRegion_t * const pxRegions );
+
+//void vPortTaskClearMPURegion( TaskHandle_t xTask, int32_t regionNumber);
+
+
 
 extern void vPortEnterCritical( void );
 extern void vPortExitCritical( void );
