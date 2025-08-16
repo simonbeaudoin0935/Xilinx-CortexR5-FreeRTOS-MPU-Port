@@ -16,6 +16,11 @@ This port is still a work in progress. Any contribution to make it more clean/co
 
 The function 'setupMPU' was left as a week symbol in the bsp in order for the user to provide their own. The port will use internally the MPU regions 12, 13, 14 and 15. Region #12 is used for the task stack coverage. Regions 13,14 and 15 are used for the 3 user definable regions. Official FreeRTOS always talks about user being able to provide 3 regions, so I left it like that. That means the user can safely configure region 0 trough 11 in setupMPU for any static memory region configuration (like making the fpga memory range nom cachable/device-memory for example). 
 
+note I did a poor job of outlining what my additions are to the xilinx BSP because I just commited the whole thing when it was functional. If you want to understand what has changed from the OG BSP, download the 2018.3 bsp from xilinx and do a diff between the folders and you will see all kernel low level stuff. 
+
+This MPU enablement has been used in a production system since 2019 at the company I worked at, so it has made its proof. 
+
+This can easily be ported to any other cortex R5 bsp from other chip vendor once the diff is extracted.
 
 
 
